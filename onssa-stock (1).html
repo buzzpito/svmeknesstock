@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion de Stock – Service Vétérinaire ONSSA Meknès</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<style>
+/* ===== CSS VARIABLES ===== */
+:root {
+  --bg: #f5f0e8;
+  --bg2: #ede8df;
+  --bg3: #e3ddd3;
+  --text: #1a1a1a;
+  --text2: #444;
+  --text3: #888;
+  --green: #1a4a2e;
+  --green2: #2d6b45;
+  --green3: #3d8a5a;
+  --gold: #c9a227;
+  --gold2: #e8b830;
+  --red: #c0392b;
+  --orange: #e67e22;
+  --white: #fff;
+  --shadow: 0 4px 24px rgba(26,74,46,0.10);
+  --shadow2: 0 8px 40px rgba(26,74,46,0.18);
+  --radius: 14px;
+  --sidebar-w: 260px;
+  --transition: 0.2s ease;
+}
+[data-theme="dark"] {
+  --bg: #0d1f12;
+  --bg2: #122518;
+  --bg3: #1a3020;
+  --text: #e8e0d0;
+  --text2: #c0b8a8;
+  --text3: #7a7268;
+  --green: #3d8a5a;
+  --green2: #4da870;
+  --green3: #5dc880;
+  --gold: #c9a227;
+  --gold2: #e8b830;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --shadow2: 0 8px 40px rgba(0,0,0,0.6);
+}
+
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body { font-family: 'Raleway', sans-serif; background: var(--bg); color: var(--text); transition: background 0.3s, color 0.3s; overflow-x: hidden; }
+h1,h2,h3,h4 { font-family: 'Playfair Display', serif; }
+button { cursor: pointer; font-family: 'Raleway', sans-serif; }
+input, select, textarea { font-family: 'Raleway', sans-serif; }
+a { text-decoration: none; color: inherit; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* ===== LOGIN PAGE ===== */
+#login-page {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+}
+.login-bg {
+  position: absolute; inset: 0; overflow: hidden;
+}
+.login-bg-slide {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  animation: kenBurns 20s ease-in-out infinite;
+  opacity: 0; transition: opacity 1.5s ease;
+}
+.login-bg-slide.active { opacity: 1; }
+@keyframes kenBurns {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.08); }
+}
+.login-overlay {
+  position: absolute; inset: 0;
+  background: rgba(26,74,46,0.65);
+}
+/* Particles */
+.particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.particle {
+  position: absolute; border-radius: 50%;
+  animation: floatUp linear infinite;
+  opacity: 0.5;
+}
+@keyframes floatUp {
+  0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.5; }
+  90% { opacity: 0.3; }
+  100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+}
+.login-card {
+  position: relative; z-index: 2;
+  background: rgba(255,255,255,0.10);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(201,162,39,0.5);
+  border-radius: 24px;
+  padding: 48px 44px;
+  width: 100%; max-width: 440px;
+  box-shadow: 0 8px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(201,162,39,0.2) inset;
+  transform-style: preserve-3d;
+  transition: transform 0.1s ease;
+}
+.login-logo {
+  text-align: center; margin-bottom: 20px;
+}
+.login-logo img {
+  width: 80px; height: 80px; object-fit: contain;
+  animation: pulse 2.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 16px rgba(201,162,39,0.6));
+}
+@keyframes pulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+.login-title {
+  color: #fff; text-align: center; margin-bottom: 8px;
+  font-size: 1.25rem; font-weight: 700; letter-spacing: 0.5px;
+}
+.login-subtitle {
+  color: rgba(255,255,255,0.7); text-align: center;
+  font-size: 0.85rem; margin-bottom: 32px;
+}
+.login-step { display: none; }
+.login-step.active { display: block; }
+.form-group { margin-bottom: 18px; }
+.form-group label {
+  display: block; color: rgba(255,255,255,0.85);
+  font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;
+}
+.form-group input {
+  width: 100%; padding: 12px 16px;
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  border-radius: 10px; color: #fff;
+  font-size: 0.95rem; outline: none;
+  transition: border-color var(--transition), background var(--transition);
+}
+.form-group input::placeholder { color: rgba(255,255,255,0.5); }
+.form-group input:focus {
+  border-color: var(--gold); background: rgba(255,255,255,0.2);
+}
+.input-wrap { position: relative; }
+.input-wrap input { padding-right: 44px; }
+.eye-btn {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: rgba(255,255,255,0.6);
+  font-size: 1.1rem; padding: 2px;
+}
+.btn-primary {
+  width: 100%; padding: 13px;
+  background: linear-gradient(135deg, var(--green) 0%, var(--green2) 100%);
+  border: none; border-radius: 10px; color: #fff;
+  font-size: 1rem; font-weight: 700; letter-spacing: 0.5px;
+  transition: all var(--transition);
+  box-shadow: 0 4px 18px rgba(26,74,46,0.4);
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(26,74,46,0.5); }
+.btn-primary:active { transform: translateY(0); }
+.login-forgot {
+  text-align: center; margin-top: 16px;
+  font-size: 0.82rem; color: rgba(255,255,255,0.6);
+}
+.login-forgot a { color: var(--gold); text-decoration: underline; cursor: pointer; }
+.login-error {
+  color: #ff7070; font-size: 0.82rem;
+  text-align: center; margin-bottom: 12px;
+}
+.btn-back {
+  background: none; border: none; color: rgba(255,255,255,0.7);
+  font-size: 0.85rem; cursor: pointer; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 6px;
+}
+.btn-back:hover { color: var(--gold); }
+
+/* ===== MAIN APP ===== */
+#app { display: none; min-height: 100vh; }
+#app.visible { display: flex; }
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: var(--sidebar-w); min-height: 100vh;
+  background: var(--green);
+  display: flex; flex-direction: column;
+  position: fixed; left: 0; top: 0; bottom: 0; z-index: 100;
+  transition: transform 0.3s ease, width 0.3s ease;
+  box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+}
+[dir="rtl"] .sidebar { left: auto; right: 0; box-shadow: -4px 0 24px rgba(0,0,0,0.15); }
+.sidebar-logo {
+  padding: 28px 20px 20px;
+  display: flex; align-items: center; gap: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.sidebar-logo img { width: 44px; height: 44px; object-fit: contain; }
+.sidebar-logo-text { color: #fff; }
+.sidebar-logo-text h3 { font-size: 0.9rem; font-weight: 700; line-height: 1.2; }
+.sidebar-logo-text span { font-size: 0.72rem; opacity: 0.75; }
+.sidebar-nav { flex: 1; padding: 16px 0; overflow-y: auto; }
+.nav-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 22px; cursor: pointer;
+  color: rgba(255,255,255,0.78); font-weight: 500; font-size: 0.9rem;
+  transition: all var(--transition); position: relative;
+  border-left: 3px solid transparent;
+}
+[dir="rtl"] .nav-item { border-left: none; border-right: 3px solid transparent; }
+.nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.nav-item.active {
+  background: rgba(255,255,255,0.13); color: #fff;
+  border-left-color: var(--gold);
+}
+[dir="rtl"] .nav-item.active { border-left-color: transparent; border-right-color: var(--gold); }
+.nav-item .nav-icon { font-size: 1.2rem; width: 22px; text-align: center; }
+.sidebar-footer {
+  padding: 18px 22px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+.sidebar-user {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 14px;
+}
+.sidebar-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--gold); color: var(--green);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 1rem;
+}
+.sidebar-user-info { color: rgba(255,255,255,0.9); }
+.sidebar-user-info .name { font-size: 0.87rem; font-weight: 600; }
+.sidebar-user-info .role { font-size: 0.73rem; opacity: 0.65; }
+.btn-logout {
+  width: 100%; padding: 9px; background: rgba(255,255,255,0.1);
+  border: 1.5px solid rgba(255,255,255,0.2); border-radius: 8px;
+  color: rgba(255,255,255,0.85); font-size: 0.85rem; font-weight: 600;
+  transition: all var(--transition);
+}
+.btn-logout:hover { background: rgba(192,57,43,0.3); border-color: #ff7070; color: #ff7070; }
+
+/* ===== MAIN CONTENT ===== */
+.main-wrap {
+  margin-left: var(--sidebar-w); flex: 1;
+  display: flex; flex-direction: column; min-height: 100vh;
+  transition: margin 0.3s ease;
+}
+[dir="rtl"] .main-wrap { margin-left: 0; margin-right: var(--sidebar-w); }
+
+/* ===== HEADER ===== */
+.topbar {
+  background: var(--bg2); border-bottom: 1px solid var(--bg3);
+  padding: 0 28px; height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+  box-shadow: var(--shadow);
+}
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.hamburger {
+  display: none; background: none; border: none;
+  font-size: 1.4rem; color: var(--text); cursor: pointer;
+}
+.topbar-title { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--text); }
+.topbar-right { display: flex; align-items: center; gap: 14px; }
+.datetime { font-size: 0.8rem; color: var(--text3); }
+.lang-selector { display: flex; gap: 6px; }
+.lang-btn {
+  background: none; border: 1.5px solid transparent; border-radius: 6px;
+  padding: 4px 8px; font-size: 0.82rem; color: var(--text2); cursor: pointer;
+  transition: all var(--transition);
+}
+.lang-btn:hover, .lang-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(201,162,39,0.08); }
+.theme-btn {
+  background: var(--bg3); border: none; border-radius: 8px;
+  width: 36px; height: 36px; font-size: 1.1rem; cursor: pointer;
+  transition: background var(--transition);
+  display: flex; align-items: center; justify-content: center;
+}
+.theme-btn:hover { background: var(--green3); }
+
+/* ===== CONTENT AREA ===== */
+.content { padding: 28px; flex: 1; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* ===== CARDS ===== */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 18px; margin-bottom: 28px; }
+.stat-card {
+  background: var(--bg2); border-radius: var(--radius);
+  padding: 20px 22px; border: 1px solid var(--bg3);
+  box-shadow: var(--shadow); position: relative; overflow: hidden;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow2); }
+.stat-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: linear-gradient(90deg, var(--green), var(--gold));
+}
+.stat-card .stat-icon { font-size: 2rem; margin-bottom: 10px; }
+.stat-card .stat-value { font-size: 2rem; font-weight: 700; font-family: 'Playfair Display', serif; color: var(--green); }
+[data-theme="dark"] .stat-card .stat-value { color: var(--green3); }
+.stat-card .stat-label { font-size: 0.8rem; color: var(--text3); margin-top: 4px; }
+.stat-card.danger .stat-value { color: var(--red); }
+.stat-card.warning .stat-value { color: var(--orange); }
+
+/* ===== TABLE ===== */
+.table-wrap {
+  background: var(--bg2); border-radius: var(--radius);
+  border: 1px solid var(--bg3); box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.table-header {
+  padding: 18px 22px; border-bottom: 1px solid var(--bg3);
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+.table-header h2 { font-size: 1.15rem; color: var(--text); }
+.table-tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.search-input {
+  padding: 8px 14px; border: 1.5px solid var(--bg3); border-radius: 8px;
+  background: var(--bg); color: var(--text); font-size: 0.87rem;
+  outline: none; min-width: 200px; transition: border-color var(--transition);
+}
+.search-input:focus { border-color: var(--green); }
+.filter-select {
+  padding: 8px 12px; border: 1.5px solid var(--bg3); border-radius: 8px;
+  background: var(--bg); color: var(--text); font-size: 0.87rem; outline: none;
+  cursor: pointer; transition: border-color var(--transition);
+}
+.filter-select:focus { border-color: var(--green); }
+.btn-add {
+  padding: 8px 18px; background: var(--green); color: #fff;
+  border: none; border-radius: 8px; font-size: 0.87rem; font-weight: 600;
+  transition: all var(--transition);
+}
+.btn-add:hover { background: var(--green2); transform: translateY(-1px); }
+.btn-export {
+  padding: 8px 16px; background: var(--gold); color: #fff;
+  border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+  transition: all var(--transition);
+}
+.btn-export:hover { background: var(--gold2); transform: translateY(-1px); }
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 600px; }
+th {
+  background: var(--green); color: #fff; padding: 12px 14px;
+  font-size: 0.82rem; font-weight: 600; text-align: left; white-space: nowrap;
+}
+[dir="rtl"] th { text-align: right; }
+td {
+  padding: 11px 14px; font-size: 0.85rem; color: var(--text2);
+  border-bottom: 1px solid var(--bg3); vertical-align: middle;
+}
+tr:hover td { background: rgba(26,74,46,0.04); }
+.badge {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 0.75rem; font-weight: 600;
+}
+.badge-green { background: rgba(61,138,90,0.15); color: var(--green2); }
+.badge-red { background: rgba(192,57,43,0.15); color: var(--red); }
+.badge-orange { background: rgba(230,126,34,0.15); color: var(--orange); }
+.badge-gold { background: rgba(201,162,39,0.15); color: var(--gold); }
+.stock-low { color: var(--red); font-weight: 700; }
+.stock-ok { color: var(--green2); font-weight: 600; }
+.btn-edit, .btn-del {
+  padding: 5px 12px; border: none; border-radius: 6px;
+  font-size: 0.78rem; font-weight: 600; margin-right: 4px; transition: all var(--transition);
+}
+.btn-edit { background: rgba(26,74,46,0.12); color: var(--green); }
+.btn-edit:hover { background: var(--green); color: #fff; }
+.btn-del { background: rgba(192,57,43,0.12); color: var(--red); }
+.btn-del:hover { background: var(--red); color: #fff; }
+
+/* ===== PAGINATION ===== */
+.pagination {
+  padding: 14px 22px; display: flex; align-items: center;
+  justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  border-top: 1px solid var(--bg3);
+}
+.pagination-info { font-size: 0.82rem; color: var(--text3); }
+.pagination-btns { display: flex; gap: 6px; }
+.pag-btn {
+  padding: 5px 12px; border: 1.5px solid var(--bg3); border-radius: 6px;
+  background: var(--bg); color: var(--text2); font-size: 0.82rem; cursor: pointer;
+  transition: all var(--transition);
+}
+.pag-btn:hover, .pag-btn.active { border-color: var(--green); color: var(--green); background: rgba(26,74,46,0.08); }
+.pag-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ===== FORMS ===== */
+.form-wrap {
+  background: var(--bg2); border-radius: var(--radius);
+  border: 1px solid var(--bg3); box-shadow: var(--shadow);
+  padding: 24px 28px; margin-bottom: 24px;
+}
+.form-wrap h2 { font-size: 1.15rem; margin-bottom: 20px; color: var(--text); }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 0.82rem; font-weight: 600; color: var(--text2); }
+.field input, .field select, .field textarea {
+  padding: 9px 13px; border: 1.5px solid var(--bg3); border-radius: 8px;
+  background: var(--bg); color: var(--text); font-size: 0.87rem; outline: none;
+  transition: border-color var(--transition);
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--green); }
+.field textarea { resize: vertical; min-height: 80px; }
+.form-actions { margin-top: 18px; display: flex; gap: 10px; }
+.btn-submit {
+  padding: 10px 24px; background: var(--green); color: #fff;
+  border: none; border-radius: 8px; font-weight: 700; font-size: 0.9rem;
+  transition: all var(--transition);
+}
+.btn-submit:hover { background: var(--green2); transform: translateY(-1px); }
+.btn-cancel2 {
+  padding: 10px 20px; background: var(--bg3); color: var(--text2);
+  border: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem;
+  transition: all var(--transition);
+}
+.btn-cancel2:hover { background: var(--bg3); }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  z-index: 900; display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--bg); border-radius: var(--radius);
+  padding: 32px 36px; width: 100%; max-width: 480px;
+  box-shadow: var(--shadow2); border: 1px solid var(--bg3);
+  transform: scale(0.95); transition: transform 0.2s;
+}
+.modal-overlay.open .modal { transform: scale(1); }
+.modal h3 { font-size: 1.2rem; margin-bottom: 12px; }
+.modal p { font-size: 0.9rem; color: var(--text2); margin-bottom: 24px; }
+.modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
+.btn-confirm-del {
+  padding: 9px 20px; background: var(--red); color: #fff;
+  border: none; border-radius: 8px; font-weight: 700; cursor: pointer;
+  transition: all var(--transition);
+}
+.btn-confirm-del:hover { background: #a93226; }
+.btn-modal-cancel {
+  padding: 9px 20px; background: var(--bg3); color: var(--text2);
+  border: none; border-radius: 8px; font-weight: 600; cursor: pointer;
+  transition: all var(--transition);
+}
+
+/* ===== TOAST ===== */
+#toast-container {
+  position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+  display: flex; flex-direction: column; gap: 10px;
+  align-items: flex-end;
+}
+[dir="rtl"] #toast-container { right: auto; left: 28px; align-items: flex-start; }
+.toast {
+  padding: 12px 22px; border-radius: 10px; color: #fff;
+  font-size: 0.88rem; font-weight: 600; box-shadow: var(--shadow2);
+  animation: slideInToast 0.3s ease, fadeOut 0.4s ease 2.6s forwards;
+  max-width: 320px;
+}
+.toast-success { background: var(--green2); }
+.toast-error { background: var(--red); }
+.toast-info { background: var(--gold); color: #1a1a1a; }
+@keyframes slideInToast {
+  from { transform: translateX(50px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes fadeOut {
+  to { opacity: 0; transform: translateX(50px); }
+}
+
+/* ===== MOBILE OVERLAY ===== */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 99;
+}
+.sidebar-overlay.open { display: block; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  [dir="rtl"] .sidebar { transform: translateX(100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main-wrap { margin-left: 0 !important; margin-right: 0 !important; }
+  .hamburger { display: block; }
+  .content { padding: 16px; }
+  .topbar { padding: 0 16px; }
+  .login-card { margin: 16px; padding: 32px 24px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .datetime { display: none; }
+}
+@media (max-width: 480px) {
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .table-tools { flex-direction: column; align-items: stretch; }
+  .search-input, .filter-select { min-width: unset; width: 100%; }
+}
+
+/* Footer */
+.app-footer {
+  padding: 16px 28px; text-align: center;
+  font-size: 0.75rem; color: var(--text3);
+  border-top: 1px solid var(--bg3);
+}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN PAGE ===== -->
+<div id="login-page">
+  <div class="login-bg" id="loginBg">
+    <div class="login-bg-slide active" style="background-image:url('https://images.unsplash.com/photo-1516997121675-4c2d1684aa3e?w=1600&q=80')"></div>
+    <div class="login-bg-slide" style="background-image:url('https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1600&q=80')"></div>
+    <div class="login-bg-slide" style="background-image:url('https://images.unsplash.com/photo-1628348068343-c6a848d2b6dd?w=1600&q=80')"></div>
+    <div class="login-bg-slide" style="background-image:url('https://images.unsplash.com/photo-1581091870624-4e98ebb9bef0?w=1600&q=80')"></div>
+    <div class="login-bg-slide" style="background-image:url('https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=1600&q=80')"></div>
+    <div class="login-overlay"></div>
+    <div class="particles" id="particles"></div>
+  </div>
+  <div class="login-card" id="loginCard">
+    <div class="login-logo">
+      <img src="https://phytotafilalt.ma/wp-content/uploads/2025/11/onssa.png" alt="ONSSA" onerror="this.style.display='none'">
+    </div>
+    <div class="login-title" id="loginTitle">Service Vétérinaire – ONSSA Meknès</div>
+    <div class="login-subtitle" id="loginSub">Gestion de Stock</div>
+
+    <!-- Step 1: Email + Password -->
+    <div class="login-step active" id="step1">
+      <div id="loginError" class="login-error" style="display:none"></div>
+      <div class="form-group">
+        <label id="lblEmail">Email</label>
+        <input type="email" id="loginEmail" placeholder="votre@email.com" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label id="lblPassword">Mot de passe</label>
+        <div class="input-wrap">
+          <input type="password" id="loginPassword" placeholder="••••••••••" autocomplete="current-password">
+          <button class="eye-btn" onclick="togglePwd('loginPassword',this)" type="button">👁</button>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="doLogin()" id="btnLogin">Connexion</button>
+      <div class="login-forgot"><a onclick="showForgot()" id="forgotLink">Mot de passe oublié ?</a></div>
+    </div>
+
+    <!-- Step 2: Forgot Password -->
+    <div class="login-step" id="stepForgot">
+      <button class="btn-back" onclick="backToStep1()">← <span>Retour</span></button>
+      <div style="color:rgba(255,255,255,0.75);font-size:0.85rem;text-align:center;margin-bottom:18px;line-height:1.5" id="forgotInfo">Saisissez votre email pour recevoir votre mot de passe.</div>
+      <div id="forgotError" class="login-error" style="display:none"></div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="forgotEmail" placeholder="votre@email.com">
+      </div>
+      <button class="btn-primary" onclick="doForgot()">Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="app">
+  <!-- Sidebar overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="https://phytotafilalt.ma/wp-content/uploads/2025/11/onssa.png" alt="ONSSA" onerror="this.style.display='none'">
+      <div class="sidebar-logo-text">
+        <h3>ONSSA Meknès</h3>
+        <span data-i18n="appSubtitle">Service Vétérinaire</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav">
+      <div class="nav-item active" data-page="dashboard" onclick="navTo('dashboard')">
+        <span class="nav-icon">📊</span>
+        <span data-i18n="navDashboard">Tableau de bord</span>
+      </div>
+      <div class="nav-item" data-page="stock" onclick="navTo('stock')">
+        <span class="nav-icon">📦</span>
+        <span data-i18n="navStock">Gestion du Stock</span>
+      </div>
+      <div class="nav-item" data-page="entries" onclick="navTo('entries')">
+        <span class="nav-icon">📥</span>
+        <span data-i18n="navEntries">Entrées de Stock</span>
+      </div>
+      <div class="nav-item" data-page="exits" onclick="navTo('exits')">
+        <span class="nav-icon">📤</span>
+        <span data-i18n="navExits">Sorties de Stock</span>
+      </div>
+      <div class="nav-item" id="navAccess" data-page="access" onclick="navTo('access')" style="display:none">
+        <span class="nav-icon">👥</span>
+        <span data-i18n="navAccess">Gestion des Accès</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebarAvatar">?</div>
+        <div class="sidebar-user-info">
+          <div class="name" id="sidebarName">Utilisateur</div>
+          <div class="role" id="sidebarRole">user</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="confirmLogout()" data-i18n="logout">Déconnexion</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-wrap">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <span class="topbar-title" id="topbarTitle" data-i18n="navDashboard">Tableau de bord</span>
+      </div>
+      <div class="topbar-right">
+        <div class="datetime" id="clock"></div>
+        <div class="lang-selector">
+          <button class="lang-btn active" onclick="setLang('fr')">🇫🇷 FR</button>
+          <button class="lang-btn" onclick="setLang('en')">🇬🇧 EN</button>
+          <button class="lang-btn" onclick="setLang('ar')">🇲🇦 AR</button>
+        </div>
+        <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="content">
+      <!-- Dashboard -->
+      <div class="page active" id="page-dashboard">
+        <div class="stat-grid" id="statGrid"></div>
+        <div class="table-wrap">
+          <div class="table-header">
+            <h2 data-i18n="lowStockAlerts">Alertes Stock Faible</h2>
+          </div>
+          <div class="table-scroll">
+            <table id="alertTable">
+              <thead><tr id="alertHead"></tr></thead>
+              <tbody id="alertBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stock -->
+      <div class="page" id="page-stock">
+        <div class="table-wrap">
+          <div class="table-header">
+            <h2 data-i18n="navStock">Gestion du Stock</h2>
+            <div class="table-tools">
+              <input class="search-input" id="stockSearch" placeholder="Rechercher..." oninput="renderStock()">
+              <select class="filter-select" id="stockCatFilter" onchange="renderStock()">
+                <option value="">Toutes catégories</option>
+              </select>
+              <button class="btn-export" onclick="exportStockExcel()" data-i18n="exportExcel">Exporter Excel</button>
+              <button class="btn-add" id="btnAddProduct" onclick="openProductModal()" data-i18n="addProduct">+ Ajouter</button>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table><thead><tr id="stockHead"></tr></thead><tbody id="stockBody"></tbody></table>
+          </div>
+          <div class="pagination" id="stockPag"></div>
+        </div>
+      </div>
+
+      <!-- Entries -->
+      <div class="page" id="page-entries">
+        <div class="form-wrap" id="entryForm">
+          <h2 data-i18n="addEntry">Nouvelle Entrée</h2>
+          <div class="form-grid">
+            <div class="field"><label data-i18n="product">Produit</label><select id="entryProduct"></select></div>
+            <div class="field"><label data-i18n="quantity">Quantité</label><input type="number" id="entryQty" min="1"></div>
+            <div class="field"><label data-i18n="date">Date</label><input type="date" id="entryDate"></div>
+            <div class="field"><label data-i18n="supplier">Fournisseur</label><input type="text" id="entrySupplier"></div>
+            <div class="field"><label data-i18n="lotNum">N° de lot</label><input type="text" id="entryLot"></div>
+            <div class="field"><label data-i18n="remark">Remarque</label><textarea id="entryRemark"></textarea></div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-submit" onclick="saveEntry()" data-i18n="save">Enregistrer</button>
+            <button class="btn-cancel2" onclick="resetEntryForm()" data-i18n="cancel">Annuler</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-header">
+            <h2 data-i18n="entryHistory">Historique des Entrées</h2>
+            <div class="table-tools">
+              <input class="search-input" id="entrySearch" placeholder="Rechercher..." oninput="renderEntries()">
+              <input type="date" class="filter-select" id="entryDateFilter" onchange="renderEntries()">
+              <button class="btn-export" onclick="exportEntriesExcel()" data-i18n="exportExcel">Exporter Excel</button>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table><thead><tr id="entryHead"></tr></thead><tbody id="entryBody"></tbody></table>
+          </div>
+          <div class="pagination" id="entryPag"></div>
+        </div>
+      </div>
+
+      <!-- Exits -->
+      <div class="page" id="page-exits">
+        <div class="form-wrap" id="exitForm">
+          <h2 data-i18n="addExit">Nouvelle Sortie</h2>
+          <div class="form-grid">
+            <div class="field"><label data-i18n="product">Produit</label><select id="exitProduct"></select></div>
+            <div class="field"><label data-i18n="quantity">Quantité</label><input type="number" id="exitQty" min="1"></div>
+            <div class="field"><label data-i18n="date">Date</label><input type="date" id="exitDate"></div>
+            <div class="field"><label data-i18n="takenBy">Qui a pris</label><input type="text" id="exitPerson"></div>
+            <div class="field"><label data-i18n="service">Service / Destination</label><input type="text" id="exitService"></div>
+            <div class="field"><label data-i18n="reason">Motif</label><input type="text" id="exitReason"></div>
+            <div class="field"><label data-i18n="remark">Remarque</label><textarea id="exitRemark"></textarea></div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-submit" onclick="saveExit()" data-i18n="save">Enregistrer</button>
+            <button class="btn-cancel2" onclick="resetExitForm()" data-i18n="cancel">Annuler</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-header">
+            <h2 data-i18n="exitHistory">Historique des Sorties</h2>
+            <div class="table-tools">
+              <input class="search-input" id="exitSearch" placeholder="Rechercher..." oninput="renderExits()">
+              <input type="date" class="filter-select" id="exitDateFilter" onchange="renderExits()">
+              <button class="btn-export" onclick="exportExitsExcel()" data-i18n="exportExcel">Exporter Excel</button>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table><thead><tr id="exitHead"></tr></thead><tbody id="exitBody"></tbody></table>
+          </div>
+          <div class="pagination" id="exitPag"></div>
+        </div>
+      </div>
+
+      <!-- Access Management -->
+      <div class="page" id="page-access">
+        <div class="table-wrap">
+          <div class="table-header">
+            <h2 data-i18n="navAccess">Gestion des Accès</h2>
+            <div class="table-tools">
+              <button class="btn-add" onclick="openUserModal()" data-i18n="addUser">+ Ajouter utilisateur</button>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table><thead><tr id="accessHead"></tr></thead><tbody id="accessBody"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer class="app-footer">© 2025 ONSSA Meknès – Service Vétérinaire</footer>
+  </div>
+</div>
+
+<!-- Modals -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3 id="confirmTitle">Confirmation</h3>
+    <p id="confirmMsg">Êtes-vous sûr de vouloir supprimer cet élément ?</p>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeConfirmModal()">Annuler</button>
+      <button class="btn-confirm-del" id="confirmOkBtn">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Product Modal -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal" style="max-width:560px">
+    <h3 id="productModalTitle">Ajouter un produit</h3>
+    <div class="form-grid" style="margin-bottom:18px">
+      <div class="field"><label data-i18n="productName">Nom du produit</label><input type="text" id="pmName"></div>
+      <div class="field"><label data-i18n="reference">Référence</label><input type="text" id="pmRef"></div>
+      <div class="field"><label data-i18n="category">Catégorie</label>
+        <select id="pmCat">
+          <option value="vaccins">Vaccins</option>
+          <option value="médicaments">Médicaments</option>
+          <option value="antibiotiques">Antibiotiques</option>
+          <option value="antiparasitaires">Antiparasitaires</option>
+          <option value="matériel">Matériel</option>
+          <option value="consommables">Consommables</option>
+          <option value="désinfectants">Désinfectants</option>
+        </select>
+      </div>
+      <div class="field"><label data-i18n="initialStock">Stock Initial</label><input type="number" id="pmInitial" min="0"></div>
+      <div class="field"><label data-i18n="damagedStock">Stock Endommagé</label><input type="number" id="pmDamaged" min="0" value="0"></div>
+      <div class="field"><label data-i18n="minThreshold">Seuil Minimum</label><input type="number" id="pmMin" min="0"></div>
+      <div class="field"><label data-i18n="unit">Unité</label><input type="text" id="pmUnit" placeholder="doses, boites..."></div>
+    </div>
+    <input type="hidden" id="pmEditId">
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeProductModal()">Annuler</button>
+      <button class="btn-add" onclick="saveProduct()" style="padding:9px 20px">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- User Modal -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal">
+    <h3 data-i18n="addUser">Ajouter un utilisateur</h3>
+    <div class="form-grid" style="margin-bottom:18px">
+      <div class="field"><label>Prénom</label><input type="text" id="umFirst"></div>
+      <div class="field"><label>Nom</label><input type="text" id="umLast"></div>
+      <div class="field"><label>Email</label><input type="email" id="umEmail"></div>
+      <div class="field"><label>Mot de passe</label>
+        <div class="input-wrap">
+          <input type="password" id="umPass">
+          <button class="eye-btn" onclick="togglePwd('umPass',this)" type="button" style="color:var(--text3)">👁</button>
+        </div>
+      </div>
+      <div class="field"><label>Rôle</label>
+        <select id="umRole"><option value="user">Utilisateur</option><option value="admin">Admin</option></select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeUserModal()">Annuler</button>
+      <button class="btn-add" onclick="saveUser()" style="padding:9px 20px">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Logout Confirm Modal -->
+<div class="modal-overlay" id="logoutModal">
+  <div class="modal">
+    <h3 id="logoutTitle">Déconnexion</h3>
+    <p id="logoutMsg">Êtes-vous sûr de vouloir vous déconnecter ?</p>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeLogoutModal()">Annuler</button>
+      <button class="btn-confirm-del" onclick="doLogout()" style="background:var(--green)">Déconnexion</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script>
+// ========================
+// i18n TRANSLATIONS
+// ========================
+const i18n = {
+  fr: {
+    appTitle: 'Gestion de Stock – Service Vétérinaire ONSSA Meknès',
+    appSubtitle: 'Service Vétérinaire',
+    navDashboard: 'Tableau de bord',
+    navStock: 'Gestion du Stock',
+    navEntries: 'Entrées de Stock',
+    navExits: 'Sorties de Stock',
+    navAccess: 'Gestion des Accès',
+    logout: 'Déconnexion',
+    login: 'Connexion',
+    email: 'Email',
+    password: 'Mot de passe',
+    forgotLink: 'Mot de passe oublié ?',
+    back: 'Retour',
+    otpSent: 'Un code à 6 chiffres a été envoyé à votre adresse email.',
+    otpLabel: 'Code OTP',
+    verify: 'Vérifier',
+    resend: 'Renvoyer le code',
+    forgotInfo: 'Saisissez votre email pour recevoir un code de réinitialisation.',
+    send: 'Envoyer',
+    forgotNotFound: "Email non reconnu. Contactez l'administrateur.",
+    forgotSent: "Un code de réinitialisation a été envoyé à votre email.",
+    invalidOtp: 'Code invalide. Veuillez réessayer.',
+    otpExpired: 'Code expiré. Veuillez demander un nouveau code.',
+    invalidCredentials: 'Email ou mot de passe incorrect.',
+    totalProducts: 'Total Produits',
+    totalIn: 'Total Entrées',
+    totalOut: 'Total Sorties',
+    totalDamaged: 'Stock Endommagé',
+    lowStockAlerts: 'Alertes Stock Faible',
+    addProduct: '+ Ajouter produit',
+    exportExcel: 'Exporter Excel',
+    productName: 'Nom du produit',
+    reference: 'Référence / Code',
+    category: 'Catégorie',
+    initialStock: 'Stock Initial',
+    stockIn: 'Stock Entré',
+    damagedStock: 'Stock Endommagé',
+    stockOut: 'Stock Sorti',
+    remaining: 'Reste en Stock',
+    minThreshold: 'Seuil Min.',
+    unit: 'Unité',
+    actions: 'Actions',
+    edit: 'Éditer',
+    delete: 'Supprimer',
+    confirmDelete: 'Confirmer la suppression',
+    confirmDeleteMsg: 'Êtes-vous sûr de vouloir supprimer cet élément ? Cette action est irréversible.',
+    save: 'Enregistrer',
+    cancel: 'Annuler',
+    addEntry: 'Nouvelle Entrée',
+    product: 'Produit',
+    quantity: 'Quantité',
+    date: 'Date',
+    supplier: 'Fournisseur',
+    lotNum: 'N° de lot',
+    remark: 'Remarque',
+    entryHistory: 'Historique des Entrées',
+    addExit: 'Nouvelle Sortie',
+    takenBy: 'Qui a pris',
+    service: 'Service / Destination',
+    reason: 'Motif',
+    exitHistory: 'Historique des Sorties',
+    addUser: '+ Ajouter utilisateur',
+    name: 'Nom',
+    role: 'Rôle',
+    createdAt: 'Date de création',
+    logoutConfirmTitle: 'Déconnexion',
+    logoutConfirmMsg: 'Êtes-vous sûr de vouloir vous déconnecter ?',
+    savedSuccess: 'Enregistrement réussi.',
+    deletedSuccess: 'Élément supprimé.',
+    errorRequired: 'Veuillez remplir tous les champs obligatoires.',
+    errorStock: 'Stock insuffisant.',
+    person: 'Personne',
+    categories: { vaccins:'Vaccins', médicaments:'Médicaments', antibiotiques:'Antibiotiques', antiparasitaires:'Antiparasitaires', matériel:'Matériel', consommables:'Consommables', désinfectants:'Désinfectants' },
+    allCats: 'Toutes catégories',
+  },
+  en: {
+    appTitle: 'Stock Management – ONSSA Meknès Veterinary Service',
+    appSubtitle: 'Veterinary Service',
+    navDashboard: 'Dashboard',
+    navStock: 'Stock Management',
+    navEntries: 'Stock Received',
+    navExits: 'Stock Issued',
+    navAccess: 'Access Management',
+    logout: 'Logout',
+    login: 'Login',
+    email: 'Email',
+    password: 'Password',
+    forgotLink: 'Forgot password?',
+    back: 'Back',
+    otpSent: 'A 6-digit code has been sent to your email address.',
+    otpLabel: 'OTP Code',
+    verify: 'Verify',
+    resend: 'Resend code',
+    forgotInfo: 'Enter your email to receive a reset code.',
+    send: 'Send',
+    forgotNotFound: 'Email not found. Contact your administrator.',
+    forgotSent: 'A reset code has been sent to your email.',
+    invalidOtp: 'Invalid code. Please try again.',
+    otpExpired: 'Code expired. Please request a new one.',
+    invalidCredentials: 'Invalid email or password.',
+    totalProducts: 'Total Products',
+    totalIn: 'Total Received',
+    totalOut: 'Total Issued',
+    totalDamaged: 'Damaged Stock',
+    lowStockAlerts: 'Low Stock Alerts',
+    addProduct: '+ Add product',
+    exportExcel: 'Export Excel',
+    productName: 'Product name',
+    reference: 'Reference / Code',
+    category: 'Category',
+    initialStock: 'Initial Stock',
+    stockIn: 'Stock Received',
+    damagedStock: 'Damaged Stock',
+    stockOut: 'Stock Issued',
+    remaining: 'Remaining Stock',
+    minThreshold: 'Min. Threshold',
+    unit: 'Unit',
+    actions: 'Actions',
+    edit: 'Edit',
+    delete: 'Delete',
+    confirmDelete: 'Confirm deletion',
+    confirmDeleteMsg: 'Are you sure you want to delete this item? This action cannot be undone.',
+    save: 'Save',
+    cancel: 'Cancel',
+    addEntry: 'New Entry',
+    product: 'Product',
+    quantity: 'Quantity',
+    date: 'Date',
+    supplier: 'Supplier',
+    lotNum: 'Lot number',
+    remark: 'Remark',
+    entryHistory: 'Received History',
+    addExit: 'New Issue',
+    takenBy: 'Taken by',
+    service: 'Service / Destination',
+    reason: 'Reason',
+    exitHistory: 'Issued History',
+    addUser: '+ Add user',
+    name: 'Name',
+    role: 'Role',
+    createdAt: 'Created at',
+    logoutConfirmTitle: 'Logout',
+    logoutConfirmMsg: 'Are you sure you want to logout?',
+    savedSuccess: 'Saved successfully.',
+    deletedSuccess: 'Item deleted.',
+    errorRequired: 'Please fill in all required fields.',
+    errorStock: 'Insufficient stock.',
+    person: 'Person',
+    categories: { vaccins:'Vaccines', médicaments:'Medications', antibiotiques:'Antibiotics', antiparasitaires:'Antiparasitics', matériel:'Equipment', consommables:'Consumables', désinfectants:'Disinfectants' },
+    allCats: 'All categories',
+  },
+  ar: {
+    appTitle: 'إدارة المخزون – الخدمة البيطرية ONSSA مكناس',
+    appSubtitle: 'الخدمة البيطرية',
+    navDashboard: 'لوحة القيادة',
+    navStock: 'إدارة المخزون',
+    navEntries: 'المخزون الوارد',
+    navExits: 'المخزون الصادر',
+    navAccess: 'إدارة الوصول',
+    logout: 'تسجيل الخروج',
+    login: 'تسجيل الدخول',
+    email: 'البريد الإلكتروني',
+    password: 'كلمة المرور',
+    forgotLink: 'نسيت كلمة المرور؟',
+    back: 'رجوع',
+    otpSent: 'تم إرسال رمز مكون من 6 أرقام إلى بريدك الإلكتروني.',
+    otpLabel: 'رمز التحقق',
+    verify: 'تحقق',
+    resend: 'إعادة إرسال الرمز',
+    forgotInfo: 'أدخل بريدك الإلكتروني لتلقي رمز إعادة التعيين.',
+    send: 'إرسال',
+    forgotNotFound: 'البريد الإلكتروني غير معروف. تواصل مع المسؤول.',
+    forgotSent: 'تم إرسال رمز إعادة التعيين إلى بريدك.',
+    invalidOtp: 'الرمز غير صحيح. حاول مرة أخرى.',
+    otpExpired: 'انتهت صلاحية الرمز. اطلب رمزاً جديداً.',
+    invalidCredentials: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
+    totalProducts: 'إجمالي المنتجات',
+    totalIn: 'إجمالي الواردات',
+    totalOut: 'إجمالي الصادرات',
+    totalDamaged: 'المخزون التالف',
+    lowStockAlerts: 'تنبيهات المخزون المنخفض',
+    addProduct: '+ إضافة منتج',
+    exportExcel: 'تصدير Excel',
+    productName: 'اسم المنتج',
+    reference: 'المرجع / الكود',
+    category: 'الفئة',
+    initialStock: 'المخزون الأولي',
+    stockIn: 'المخزون الوارد',
+    damagedStock: 'المخزون التالف',
+    stockOut: 'المخزون الصادر',
+    remaining: 'المخزون المتبقي',
+    minThreshold: 'الحد الأدنى',
+    unit: 'الوحدة',
+    actions: 'الإجراءات',
+    edit: 'تعديل',
+    delete: 'حذف',
+    confirmDelete: 'تأكيد الحذف',
+    confirmDeleteMsg: 'هل أنت متأكد من حذف هذا العنصر؟ لا يمكن التراجع عن هذا الإجراء.',
+    save: 'حفظ',
+    cancel: 'إلغاء',
+    addEntry: 'وارد جديد',
+    product: 'المنتج',
+    quantity: 'الكمية',
+    date: 'التاريخ',
+    supplier: 'المورد',
+    lotNum: 'رقم الدفعة',
+    remark: 'ملاحظة',
+    entryHistory: 'سجل الواردات',
+    addExit: 'صادر جديد',
+    takenBy: 'من أخذ المنتج',
+    service: 'القسم / الوجهة',
+    reason: 'السبب',
+    exitHistory: 'سجل الصادرات',
+    addUser: '+ إضافة مستخدم',
+    name: 'الاسم',
+    role: 'الدور',
+    createdAt: 'تاريخ الإنشاء',
+    logoutConfirmTitle: 'تسجيل الخروج',
+    logoutConfirmMsg: 'هل أنت متأكد من تسجيل الخروج؟',
+    savedSuccess: 'تم الحفظ بنجاح.',
+    deletedSuccess: 'تم حذف العنصر.',
+    errorRequired: 'يرجى ملء جميع الحقول المطلوبة.',
+    errorStock: 'مخزون غير كافٍ.',
+    person: 'الشخص',
+    categories: { vaccins:'لقاحات', médicaments:'أدوية', antibiotiques:'مضادات حيوية', antiparasitaires:'مضادات الطفيليات', matériel:'معدات', consommables:'مواد استهلاكية', désinfectants:'مطهرات' },
+    allCats: 'جميع الفئات',
+  }
+};
+
+// ========================
+// STATE
+// ========================
+let currentLang = localStorage.getItem('onssa_lang') || 'fr';
+let currentTheme = localStorage.getItem('onssa_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+let currentUser = null;
+let currentPage = 'dashboard';
+let stockPage = 1, entryPage = 1, exitPage = 1;
+const PER_PAGE = 20;
+let confirmCallback = null;
+let editingProductId = null;
+
+// ========================
+// STORAGE HELPERS
+// ========================
+const lsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+const lsSet = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+
+// ========================
+// INIT DEFAULT DATA
+// ========================
+function initDefaults() {
+  // Users
+  if (!lsGet('onssa_users')) {
+    lsSet('onssa_users', [
+      { id: 'u1', firstName: 'Hicham', lastName: 'Elhaooari', email: 'elhaooari@gmail.com', password: '123456789@Hh', role: 'admin', createdAt: '2024-01-01' },
+      { id: 'u2', firstName: 'User', lastName: 'One', email: 'user1@onssa.ma', password: 'User1@2024', role: 'user', createdAt: '2024-01-15' },
+      { id: 'u3', firstName: 'User', lastName: 'Two', email: 'user2@onssa.ma', password: 'User2@2024', role: 'user', createdAt: '2024-02-01' },
+    ]);
+  }
+  // Products
+  if (!lsGet('onssa_products')) {
+    lsSet('onssa_products', [
+      { id: 'p1', name: 'Vaccin Brucella', ref: 'VAC-BRU-001', category: 'vaccins', initial: 500, damaged: 5, minThreshold: 50, unit: 'doses' },
+      { id: 'p2', name: 'Vaccin FMD (Fièvre Aphteuse)', ref: 'VAC-FMD-002', category: 'vaccins', initial: 1000, damaged: 10, minThreshold: 100, unit: 'doses' },
+      { id: 'p3', name: 'Vaccin Newcastle', ref: 'VAC-NEW-003', category: 'vaccins', initial: 2000, damaged: 0, minThreshold: 200, unit: 'doses' },
+      { id: 'p4', name: 'Amoxicilline Injectable', ref: 'ANT-AMO-004', category: 'antibiotiques', initial: 200, damaged: 2, minThreshold: 20, unit: 'boites' },
+      { id: 'p5', name: 'Oxytétracycline 20%', ref: 'ANT-OXY-005', category: 'antibiotiques', initial: 150, damaged: 0, minThreshold: 15, unit: 'flacons' },
+      { id: 'p6', name: 'Ivermectine 1%', ref: 'PAR-IVE-006', category: 'antiparasitaires', initial: 300, damaged: 0, minThreshold: 30, unit: 'flacons' },
+      { id: 'p7', name: 'Albendazole 10%', ref: 'PAR-ALB-007', category: 'antiparasitaires', initial: 100, damaged: 0, minThreshold: 10, unit: 'litres' },
+      { id: 'p8', name: 'Seringues 5ml', ref: 'MAT-SER-008', category: 'consommables', initial: 5000, damaged: 50, minThreshold: 500, unit: 'pièces' },
+      { id: 'p9', name: 'Gants d\'examen L', ref: 'MAT-GAN-009', category: 'consommables', initial: 200, damaged: 0, minThreshold: 20, unit: 'boites' },
+      { id: 'p10', name: 'Désinfectant Virkon S', ref: 'DES-VIR-010', category: 'désinfectants', initial: 50, damaged: 0, minThreshold: 5, unit: 'kg' },
+      { id: 'p11', name: 'Thermomètre rectal', ref: 'MAT-THE-011', category: 'matériel', initial: 30, damaged: 2, minThreshold: 5, unit: 'pièces' },
+      { id: 'p12', name: 'Anti-inflammatoire Kétoprofène', ref: 'MED-KET-012', category: 'médicaments', initial: 80, damaged: 0, minThreshold: 8, unit: 'flacons' },
+    ]);
+  }
+  // Entries
+  if (!lsGet('onssa_entries')) {
+    const today = new Date().toISOString().split('T')[0];
+    lsSet('onssa_entries', [
+      { id: 'e1', productId: 'p1', qty: 200, date: '2024-11-15', supplier: 'LAPAHO', lot: 'L2024-001', remark: '' },
+      { id: 'e2', productId: 'p2', qty: 500, date: '2024-11-20', supplier: 'Virbac Maroc', lot: 'L2024-002', remark: '' },
+      { id: 'e3', productId: 'p3', qty: 1000, date: '2024-12-01', supplier: 'Ceva Santé', lot: 'L2024-003', remark: 'Livraison urgente' },
+      { id: 'e4', productId: 'p8', qty: 2000, date: '2025-01-10', supplier: 'Médilab', lot: 'L2025-001', remark: '' },
+      { id: 'e5', productId: 'p9', qty: 100, date: '2025-01-15', supplier: 'Médilab', lot: 'L2025-002', remark: '' },
+    ]);
+  }
+  // Exits
+  if (!lsGet('onssa_exits')) {
+    lsSet('onssa_exits', [
+      { id: 'x1', productId: 'p1', qty: 150, date: '2024-12-01', person: 'Dr. Ahmed Benali', service: 'Brigade Mobile', reason: 'Campagne vaccination Brucella', remark: '' },
+      { id: 'x2', productId: 'p3', qty: 500, date: '2024-12-10', person: 'Dr. Sara Moussaoui', service: 'Aviculture', reason: 'Vaccination Newcastle Meknès Est', remark: '' },
+      { id: 'x3', productId: 'p8', qty: 300, date: '2025-01-05', person: 'Tech. Youssef Ait', service: 'Labo vétérinaire', reason: 'Prélèvements terrain', remark: '' },
+      { id: 'x4', productId: 'p4', qty: 20, date: '2025-01-20', person: 'Dr. Fatima Elmir', service: 'Clinique vétérinaire', reason: 'Traitement bovins', remark: '' },
+      { id: 'x5', productId: 'p6', qty: 30, date: '2025-02-01', person: 'Dr. Ahmed Benali', service: 'Brigade Mobile', reason: 'Déparasitage ovins', remark: '' },
+    ]);
+  }
+}
+
+// ========================
+// COMPUTED STOCK
+// ========================
+function getProductStock(productId) {
+  const entries = (lsGet('onssa_entries') || []).filter(e => e.productId === productId);
+  const exits = (lsGet('onssa_exits') || []).filter(e => e.productId === productId);
+  const products = lsGet('onssa_products') || [];
+  const p = products.find(p => p.id === productId);
+  if (!p) return null;
+  const totalIn = entries.reduce((s, e) => s + (parseInt(e.qty) || 0), 0);
+  const totalOut = exits.reduce((s, e) => s + (parseInt(e.qty) || 0), 0);
+  const remaining = (parseInt(p.initial) || 0) + totalIn - totalOut - (parseInt(p.damaged) || 0);
+  return { initial: p.initial, totalIn, damaged: p.damaged, totalOut, remaining, minThreshold: p.minThreshold };
+}
+
+// ========================
+// THEME
+// ========================
+function applyTheme(t) {
+  currentTheme = t;
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('themeBtn').textContent = t === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('onssa_theme', t);
+}
+function toggleTheme() { applyTheme(currentTheme === 'dark' ? 'light' : 'dark'); }
+
+// ========================
+// LANGUAGE
+// ========================
+function setLang(l) {
+  currentLang = l;
+  localStorage.setItem('onssa_lang', l);
+  const dir = l === 'ar' ? 'rtl' : 'ltr';
+  document.documentElement.setAttribute('lang', l);
+  document.documentElement.setAttribute('dir', dir);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent.includes(l.toUpperCase())));
+  translatePage();
+  if (currentUser) reRender();
+}
+function t(key) { return (i18n[currentLang] && i18n[currentLang][key]) || (i18n.fr[key]) || key; }
+function translatePage() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+  // Placeholders
+  const sm = document.getElementById('stockSearch'); if (sm) sm.placeholder = t('navStock');
+}
+
+// ========================
+// PARTICLES
+// ========================
+function createParticles() {
+  const container = document.getElementById('particles');
+  if (!container) return;
+  const colors = ['rgba(61,138,90,0.6)', 'rgba(201,162,39,0.5)', 'rgba(255,255,255,0.3)'];
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 6 + 3;
+    p.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      animation-duration:${Math.random()*15+8}s;
+      animation-delay:${Math.random()*10}s;
+    `;
+    container.appendChild(p);
+  }
+}
+
+// ========================
+// SLIDESHOW
+// ========================
+function initSlideshow() {
+  const slides = document.querySelectorAll('.login-bg-slide');
+  let current = 0;
+  setInterval(() => {
+    slides[current].classList.remove('active');
+    current = (current + 1) % slides.length;
+    slides[current].classList.add('active');
+  }, 6000);
+}
+
+// ========================
+// LOGIN 3D TILT
+// ========================
+function initTilt() {
+  if (window.innerWidth < 768) return;
+  const card = document.getElementById('loginCard');
+  document.addEventListener('mousemove', e => {
+    const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+    const dx = (e.clientX - cx) / cx, dy = (e.clientY - cy) / cy;
+    card.style.transform = `perspective(800px) rotateY(${dx * 8}deg) rotateX(${-dy * 8}deg)`;
+  });
+  document.addEventListener('mouseleave', () => {
+    card.style.transform = 'perspective(800px) rotateY(0) rotateX(0)';
+  });
+}
+
+// ========================
+// AUTH
+// ========================
+function togglePwd(id, btn) {
+  const input = document.getElementById(id);
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = '🔒'; }
+  else { input.type = 'password'; btn.textContent = '👁'; }
+}
+
+function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  const users = lsGet('onssa_users') || [];
+  const user = users.find(u => u.email === email && u.password === pass);
+  const errEl = document.getElementById('loginError');
+  if (!user) {
+    errEl.textContent = t('invalidCredentials');
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+  loginSuccess(user);
+}
+
+function showForgot() { showStep('stepForgot'); }
+function backToStep1() { showStep('step1'); }
+
+function doForgot() {
+  const email = document.getElementById('forgotEmail').value.trim();
+  const errEl = document.getElementById('forgotError');
+  const users = lsGet('onssa_users') || [];
+  const user = users.find(u => u.email === email);
+  if (!user) {
+    errEl.textContent = t('forgotNotFound'); errEl.style.display = 'block'; return;
+  }
+  errEl.style.display = 'none';
+  // Display password hint (no email sending)
+  showToast('Mot de passe : ' + user.password, 'info');
+  setTimeout(() => backToStep1(), 3000);
+}
+
+function showStep(id) {
+  document.querySelectorAll('.login-step').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function loginSuccess(user) {
+  currentUser = user;
+  localStorage.setItem('onssa_session', JSON.stringify({ userId: user.id }));
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  initApp();
+}
+
+function confirmLogout() {
+  document.getElementById('logoutTitle').textContent = t('logoutConfirmTitle');
+  document.getElementById('logoutMsg').textContent = t('logoutConfirmMsg');
+  document.getElementById('logoutModal').classList.add('open');
+}
+function closeLogoutModal() { document.getElementById('logoutModal').classList.remove('open'); }
+function doLogout() {
+  localStorage.removeItem('onssa_session');
+  currentUser = null;
+  closeLogoutModal();
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('login-page').style.display = '';
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPassword').value = '';
+  showStep('step1');
+}
+
+// Session persistence
+function checkSession() {
+  const s = lsGet('onssa_session');
+  if (s && s.userId) {
+    const users = lsGet('onssa_users') || [];
+    const user = users.find(u => u.id === s.userId);
+    if (user) { loginSuccess(user); return true; }
+  }
+  return false;
+}
+
+// ========================
+// APP INIT
+// ========================
+function initApp() {
+  // Sidebar user info
+  document.getElementById('sidebarAvatar').textContent = (currentUser.firstName[0] + currentUser.lastName[0]).toUpperCase();
+  document.getElementById('sidebarName').textContent = currentUser.firstName + ' ' + currentUser.lastName;
+  document.getElementById('sidebarRole').textContent = currentUser.role === 'admin' ? 'Administrateur' : 'Utilisateur';
+  // Admin-only elements
+  const isAdmin = currentUser.role === 'admin';
+  document.getElementById('navAccess').style.display = isAdmin ? '' : 'none';
+  document.getElementById('btnAddProduct').style.display = isAdmin ? '' : 'none';
+  // Set today's date on forms
+  const today = new Date().toISOString().split('T')[0];
+  ['entryDate','exitDate'].forEach(id => { const el = document.getElementById(id); if (el) el.value = today; });
+  translatePage();
+  populateProductDropdowns();
+  renderCurrentPage();
+}
+
+function reRender() {
+  translatePage();
+  populateProductDropdowns();
+  renderCurrentPage();
+}
+
+function populateProductDropdowns() {
+  const products = lsGet('onssa_products') || [];
+  ['entryProduct','exitProduct'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const val = sel.value;
+    sel.innerHTML = '<option value="">-- ' + t('product') + ' --</option>';
+    products.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id; opt.textContent = p.name;
+      sel.appendChild(opt);
+    });
+    if (val) sel.value = val;
+  });
+  // Category filter
+  const catFilter = document.getElementById('stockCatFilter');
+  if (catFilter) {
+    const cats = [...new Set((lsGet('onssa_products') || []).map(p => p.category))];
+    catFilter.innerHTML = `<option value="">${t('allCats')}</option>`;
+    cats.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c; opt.textContent = t('categories')[c] || c;
+      catFilter.appendChild(opt);
+    });
+  }
+}
+
+// ========================
+// NAVIGATION
+// ========================
+function navTo(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.getAttribute('data-page') === page));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page)?.classList.add('active');
+  document.getElementById('topbarTitle').textContent = t('nav' + page.charAt(0).toUpperCase() + page.slice(1));
+  closeSidebar();
+  renderCurrentPage();
+}
+
+function renderCurrentPage() {
+  if (currentPage === 'dashboard') renderDashboard();
+  else if (currentPage === 'stock') renderStock();
+  else if (currentPage === 'entries') renderEntries();
+  else if (currentPage === 'exits') renderExits();
+  else if (currentPage === 'access') renderAccess();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+// ========================
+// DASHBOARD
+// ========================
+function renderDashboard() {
+  const products = lsGet('onssa_products') || [];
+  const entries = lsGet('onssa_entries') || [];
+  const exits = lsGet('onssa_exits') || [];
+  const totalIn = entries.reduce((s,e) => s + (parseInt(e.qty)||0), 0);
+  const totalOut = exits.reduce((s,e) => s + (parseInt(e.qty)||0), 0);
+  const totalDmg = products.reduce((s,p) => s + (parseInt(p.damaged)||0), 0);
+  const lowStock = products.filter(p => {
+    const st = getProductStock(p.id);
+    return st && st.remaining < p.minThreshold;
+  });
+
+  const statGrid = document.getElementById('statGrid');
+  statGrid.innerHTML = `
+    <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-value">${products.length}</div><div class="stat-label">${t('totalProducts')}</div></div>
+    <div class="stat-card"><div class="stat-icon">📥</div><div class="stat-value">${totalIn.toLocaleString()}</div><div class="stat-label">${t('totalIn')}</div></div>
+    <div class="stat-card"><div class="stat-icon">📤</div><div class="stat-value">${totalOut.toLocaleString()}</div><div class="stat-label">${t('totalOut')}</div></div>
+    <div class="stat-card ${totalDmg > 0 ? 'warning' : ''}"><div class="stat-icon">⚠️</div><div class="stat-value">${totalDmg.toLocaleString()}</div><div class="stat-label">${t('totalDamaged')}</div></div>
+    <div class="stat-card ${lowStock.length > 0 ? 'danger' : ''}"><div class="stat-icon">🔴</div><div class="stat-value">${lowStock.length}</div><div class="stat-label">${t('lowStockAlerts')}</div></div>
+  `;
+  // Alert table
+  document.getElementById('alertHead').innerHTML = `<th>${t('productName')}</th><th>${t('category')}</th><th>${t('remaining')}</th><th>${t('minThreshold')}</th>`;
+  const alertBody = document.getElementById('alertBody');
+  if (lowStock.length === 0) {
+    alertBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:24px">✅ Aucune alerte</td></tr>`;
+  } else {
+    alertBody.innerHTML = lowStock.map(p => {
+      const st = getProductStock(p.id);
+      return `<tr><td>${p.name}</td><td><span class="badge badge-gold">${t('categories')[p.category]||p.category}</span></td><td class="stock-low">${st.remaining} ${p.unit||''}</td><td>${p.minThreshold} ${p.unit||''}</td></tr>`;
+    }).join('');
+  }
+}
+
+// ========================
+// STOCK TABLE
+// ========================
+function renderStock() {
+  const search = (document.getElementById('stockSearch')?.value || '').toLowerCase();
+  const catF = document.getElementById('stockCatFilter')?.value || '';
+  let products = lsGet('onssa_products') || [];
+  if (search) products = products.filter(p => p.name.toLowerCase().includes(search) || p.ref?.toLowerCase().includes(search));
+  if (catF) products = products.filter(p => p.category === catF);
+
+  const isAdmin = currentUser?.role === 'admin';
+  document.getElementById('stockHead').innerHTML = `
+    <th>${t('productName')}</th><th>${t('reference')}</th><th>${t('category')}</th>
+    <th>${t('initialStock')}</th><th>${t('stockIn')}</th><th>${t('damagedStock')}</th>
+    <th>${t('stockOut')}</th><th>${t('remaining')}</th>
+    ${isAdmin ? `<th>${t('actions')}</th>` : ''}
+  `;
+  const total = products.length;
+  const pages = Math.ceil(total / PER_PAGE) || 1;
+  stockPage = Math.min(stockPage, pages);
+  const slice = products.slice((stockPage-1)*PER_PAGE, stockPage*PER_PAGE);
+
+  document.getElementById('stockBody').innerHTML = slice.map(p => {
+    const st = getProductStock(p.id);
+    const isLow = st && st.remaining < p.minThreshold;
+    const cats = t('categories');
+    return `<tr>
+      <td><strong>${p.name}</strong></td>
+      <td>${p.ref || '—'}</td>
+      <td><span class="badge badge-green">${cats[p.category]||p.category}</span></td>
+      <td>${p.initial}</td>
+      <td>${st?.totalIn || 0}</td>
+      <td>${st?.damaged || 0}</td>
+      <td>${st?.totalOut || 0}</td>
+      <td class="${isLow ? 'stock-low' : 'stock-ok'}">${st?.remaining ?? 0} ${p.unit||''} ${isLow ? '⚠️' : ''}</td>
+      ${isAdmin ? `<td>
+        <button class="btn-edit" onclick="openProductModal('${p.id}')">${t('edit')}</button>
+        <button class="btn-del" onclick="confirmDeleteItem('product','${p.id}')">${t('delete')}</button>
+      </td>` : ''}
+    </tr>`;
+  }).join('');
+
+  renderPagination('stockPag', stockPage, pages, n => { stockPage = n; renderStock(); }, total);
+}
+
+// ========================
+// ENTRIES
+// ========================
+function renderEntries() {
+  const search = (document.getElementById('entrySearch')?.value || '').toLowerCase();
+  const dateF = document.getElementById('entryDateFilter')?.value || '';
+  const products = lsGet('onssa_products') || [];
+  let entries = lsGet('onssa_entries') || [];
+  if (search) entries = entries.filter(e => {
+    const p = products.find(x => x.id === e.productId);
+    return (p?.name.toLowerCase().includes(search)) || (e.supplier?.toLowerCase().includes(search));
+  });
+  if (dateF) entries = entries.filter(e => e.date === dateF);
+  entries = [...entries].reverse();
+
+  document.getElementById('entryHead').innerHTML = `<th>${t('date')}</th><th>${t('product')}</th><th>${t('quantity')}</th><th>${t('supplier')}</th><th>${t('lotNum')}</th><th>${t('remark')}</th>`;
+  const total = entries.length;
+  const pages = Math.ceil(total / PER_PAGE) || 1;
+  entryPage = Math.min(entryPage, pages);
+  const slice = entries.slice((entryPage-1)*PER_PAGE, entryPage*PER_PAGE);
+  document.getElementById('entryBody').innerHTML = slice.map(e => {
+    const p = products.find(x => x.id === e.productId);
+    return `<tr><td>${e.date}</td><td>${p?.name||'—'}</td><td><strong>${e.qty}</strong> ${p?.unit||''}</td><td>${e.supplier||'—'}</td><td>${e.lot||'—'}</td><td>${e.remark||'—'}</td></tr>`;
+  }).join('');
+  renderPagination('entryPag', entryPage, pages, n => { entryPage = n; renderEntries(); }, total);
+}
+
+function saveEntry() {
+  const pid = document.getElementById('entryProduct').value;
+  const qty = parseInt(document.getElementById('entryQty').value);
+  const date = document.getElementById('entryDate').value;
+  const supplier = document.getElementById('entrySupplier').value;
+  if (!pid || !qty || !date) { showToast(t('errorRequired'), 'error'); return; }
+  const entries = lsGet('onssa_entries') || [];
+  entries.push({ id: 'e' + Date.now(), productId: pid, qty, date, supplier, lot: document.getElementById('entryLot').value, remark: document.getElementById('entryRemark').value });
+  lsSet('onssa_entries', entries);
+  resetEntryForm();
+  renderEntries();
+  renderDashboard();
+  showToast(t('savedSuccess'), 'success');
+}
+
+function resetEntryForm() {
+  ['entryProduct','entryQty','entrySupplier','entryLot','entryRemark'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
+}
+
+// ========================
+// EXITS
+// ========================
+function renderExits() {
+  const search = (document.getElementById('exitSearch')?.value || '').toLowerCase();
+  const dateF = document.getElementById('exitDateFilter')?.value || '';
+  const products = lsGet('onssa_products') || [];
+  let exits = lsGet('onssa_exits') || [];
+  if (search) exits = exits.filter(e => {
+    const p = products.find(x => x.id === e.productId);
+    return (p?.name.toLowerCase().includes(search)) || (e.person?.toLowerCase().includes(search));
+  });
+  if (dateF) exits = exits.filter(e => e.date === dateF);
+  exits = [...exits].reverse();
+
+  document.getElementById('exitHead').innerHTML = `<th>${t('date')}</th><th>${t('product')}</th><th>${t('quantity')}</th><th>${t('takenBy')}</th><th>${t('service')}</th><th>${t('reason')}</th><th>${t('remark')}</th>`;
+  const total = exits.length;
+  const pages = Math.ceil(total / PER_PAGE) || 1;
+  exitPage = Math.min(exitPage, pages);
+  const slice = exits.slice((exitPage-1)*PER_PAGE, exitPage*PER_PAGE);
+  document.getElementById('exitBody').innerHTML = slice.map(e => {
+    const p = products.find(x => x.id === e.productId);
+    return `<tr><td>${e.date}</td><td>${p?.name||'—'}</td><td><strong>${e.qty}</strong> ${p?.unit||''}</td><td>${e.person||'—'}</td><td>${e.service||'—'}</td><td>${e.reason||'—'}</td><td>${e.remark||'—'}</td></tr>`;
+  }).join('');
+  renderPagination('exitPag', exitPage, pages, n => { exitPage = n; renderExits(); }, total);
+}
+
+function saveExit() {
+  const pid = document.getElementById('exitProduct').value;
+  const qty = parseInt(document.getElementById('exitQty').value);
+  const date = document.getElementById('exitDate').value;
+  const person = document.getElementById('exitPerson').value;
+  if (!pid || !qty || !date || !person) { showToast(t('errorRequired'), 'error'); return; }
+  const st = getProductStock(pid);
+  if (!st || st.remaining < qty) { showToast(t('errorStock'), 'error'); return; }
+  const exits = lsGet('onssa_exits') || [];
+  exits.push({ id: 'x' + Date.now(), productId: pid, qty, date, person, service: document.getElementById('exitService').value, reason: document.getElementById('exitReason').value, remark: document.getElementById('exitRemark').value });
+  lsSet('onssa_exits', exits);
+  resetExitForm();
+  renderExits();
+  renderDashboard();
+  showToast(t('savedSuccess'), 'success');
+}
+
+function resetExitForm() {
+  ['exitProduct','exitQty','exitPerson','exitService','exitReason','exitRemark'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('exitDate').value = new Date().toISOString().split('T')[0];
+}
+
+// ========================
+// PRODUCT MODAL
+// ========================
+function openProductModal(id) {
+  editingProductId = id || null;
+  const modal = document.getElementById('productModal');
+  document.getElementById('productModalTitle').textContent = id ? t('edit') + ' ' + t('product') : t('addProduct');
+  if (id) {
+    const p = (lsGet('onssa_products') || []).find(p => p.id === id);
+    if (p) {
+      document.getElementById('pmName').value = p.name;
+      document.getElementById('pmRef').value = p.ref || '';
+      document.getElementById('pmCat').value = p.category;
+      document.getElementById('pmInitial').value = p.initial;
+      document.getElementById('pmDamaged').value = p.damaged || 0;
+      document.getElementById('pmMin').value = p.minThreshold;
+      document.getElementById('pmUnit').value = p.unit || '';
+    }
+  } else {
+    ['pmName','pmRef','pmInitial','pmMin','pmUnit'].forEach(i => { document.getElementById(i).value = ''; });
+    document.getElementById('pmDamaged').value = 0;
+    document.getElementById('pmCat').value = 'vaccins';
+  }
+  modal.classList.add('open');
+}
+
+function closeProductModal() { document.getElementById('productModal').classList.remove('open'); }
+
+function saveProduct() {
+  const name = document.getElementById('pmName').value.trim();
+  const initial = parseInt(document.getElementById('pmInitial').value) || 0;
+  if (!name) { showToast(t('errorRequired'), 'error'); return; }
+  const products = lsGet('onssa_products') || [];
+  if (editingProductId) {
+    const idx = products.findIndex(p => p.id === editingProductId);
+    if (idx >= 0) {
+      products[idx] = { ...products[idx], name, ref: document.getElementById('pmRef').value, category: document.getElementById('pmCat').value, initial, damaged: parseInt(document.getElementById('pmDamaged').value)||0, minThreshold: parseInt(document.getElementById('pmMin').value)||0, unit: document.getElementById('pmUnit').value };
+    }
+  } else {
+    products.push({ id: 'p' + Date.now(), name, ref: document.getElementById('pmRef').value, category: document.getElementById('pmCat').value, initial, damaged: parseInt(document.getElementById('pmDamaged').value)||0, minThreshold: parseInt(document.getElementById('pmMin').value)||0, unit: document.getElementById('pmUnit').value });
+  }
+  lsSet('onssa_products', products);
+  closeProductModal();
+  populateProductDropdowns();
+  renderStock();
+  renderDashboard();
+  showToast(t('savedSuccess'), 'success');
+}
+
+// ========================
+// ACCESS MANAGEMENT
+// ========================
+function renderAccess() {
+  const users = lsGet('onssa_users') || [];
+  document.getElementById('accessHead').innerHTML = `<th>${t('name')}</th><th>Email</th><th>${t('role')}</th><th>${t('createdAt')}</th><th>${t('actions')}</th>`;
+  document.getElementById('accessBody').innerHTML = users.map(u => `
+    <tr>
+      <td>${u.firstName} ${u.lastName}</td>
+      <td>${u.email}</td>
+      <td><span class="badge ${u.role==='admin'?'badge-gold':'badge-green'}">${u.role==='admin'?'Admin':'Utilisateur'}</span></td>
+      <td>${u.createdAt||'—'}</td>
+      <td>
+        ${u.id !== currentUser.id ? `<button class="btn-del" onclick="confirmDeleteItem('user','${u.id}')">${t('delete')}</button>` : '<em style="color:var(--text3)">Vous</em>'}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openUserModal() { document.getElementById('userModal').classList.add('open'); }
+function closeUserModal() {
+  document.getElementById('userModal').classList.remove('open');
+  ['umFirst','umLast','umEmail','umPass'].forEach(i => { document.getElementById(i).value=''; });
+}
+
+function saveUser() {
+  const first = document.getElementById('umFirst').value.trim();
+  const last = document.getElementById('umLast').value.trim();
+  const email = document.getElementById('umEmail').value.trim();
+  const pass = document.getElementById('umPass').value;
+  const role = document.getElementById('umRole').value;
+  if (!first || !last || !email || !pass) { showToast(t('errorRequired'), 'error'); return; }
+  const users = lsGet('onssa_users') || [];
+  if (users.find(u => u.email === email)) { showToast('Email déjà utilisé.', 'error'); return; }
+  users.push({ id: 'u' + Date.now(), firstName: first, lastName: last, email, password: pass, role, createdAt: new Date().toISOString().split('T')[0] });
+  lsSet('onssa_users', users);
+  closeUserModal();
+  renderAccess();
+  showToast(t('savedSuccess'), 'success');
+}
+
+// ========================
+// CONFIRM DELETE
+// ========================
+function confirmDeleteItem(type, id) {
+  document.getElementById('confirmTitle').textContent = t('confirmDelete');
+  document.getElementById('confirmMsg').textContent = t('confirmDeleteMsg');
+  document.getElementById('confirmModal').classList.add('open');
+  confirmCallback = () => {
+    if (type === 'product') deleteProduct(id);
+    else if (type === 'user') deleteUser(id);
+    closeConfirmModal();
+  };
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirmModal').classList.remove('open');
+  confirmCallback = null;
+}
+
+document.getElementById('confirmOkBtn').onclick = () => { if (confirmCallback) confirmCallback(); };
+
+function deleteProduct(id) {
+  let products = lsGet('onssa_products') || [];
+  products = products.filter(p => p.id !== id);
+  lsSet('onssa_products', products);
+  renderStock();
+  renderDashboard();
+  showToast(t('deletedSuccess'), 'success');
+}
+
+function deleteUser(id) {
+  let users = lsGet('onssa_users') || [];
+  users = users.filter(u => u.id !== id);
+  lsSet('onssa_users', users);
+  renderAccess();
+  showToast(t('deletedSuccess'), 'success');
+}
+
+// ========================
+// PAGINATION
+// ========================
+function renderPagination(containerId, page, pages, callback, total) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const start = (page-1)*PER_PAGE + 1;
+  const end = Math.min(page*PER_PAGE, total);
+  let btns = '';
+  if (pages > 1) {
+    btns += `<button class="pag-btn" onclick="(${callback.toString()})(${page-1})" ${page<=1?'disabled':''}>‹</button>`;
+    for (let i = Math.max(1,page-2); i <= Math.min(pages,page+2); i++) {
+      btns += `<button class="pag-btn ${i===page?'active':''}" onclick="(${callback.toString()})(${i})">${i}</button>`;
+    }
+    btns += `<button class="pag-btn" onclick="(${callback.toString()})(${page+1})" ${page>=pages?'disabled':''}>›</button>`;
+  }
+  el.innerHTML = `<span class="pagination-info">${total > 0 ? `${start}–${end} / ${total}` : '0'}</span><div class="pagination-btns">${btns}</div>`;
+}
+
+// ========================
+// EXCEL EXPORT
+// ========================
+function getDate() { return new Date().toISOString().split('T')[0]; }
+
+function exportStockExcel() {
+  const products = lsGet('onssa_products') || [];
+  const data = [['Nom du produit','Référence','Catégorie','Stock Initial','Stock Entré','Endommagé','Stock Sorti','Reste en Stock','Seuil Min','Unité']];
+  products.forEach(p => {
+    const st = getProductStock(p.id);
+    data.push([p.name, p.ref||'', p.category, p.initial, st?.totalIn||0, st?.damaged||0, st?.totalOut||0, st?.remaining||0, p.minThreshold, p.unit||'']);
+  });
+  data.push([]); data.push(['Export le', getDate()]);
+  exportXlsx(data, `ONSSA_Meknes_Stock_${getDate()}.xlsx`);
+}
+
+function exportEntriesExcel() {
+  const products = lsGet('onssa_products') || [];
+  const entries = lsGet('onssa_entries') || [];
+  const data = [['Date','Produit','Quantité','Fournisseur','N° de Lot','Remarque']];
+  entries.forEach(e => {
+    const p = products.find(x => x.id === e.productId);
+    data.push([e.date, p?.name||'', e.qty, e.supplier||'', e.lot||'', e.remark||'']);
+  });
+  data.push([]); data.push(['Export le', getDate()]);
+  exportXlsx(data, `ONSSA_Meknes_Entrees_${getDate()}.xlsx`);
+}
+
+function exportExitsExcel() {
+  const products = lsGet('onssa_products') || [];
+  const exits = lsGet('onssa_exits') || [];
+  const data = [['Date','Produit','Quantité','Qui a pris','Service','Motif','Remarque']];
+  exits.forEach(e => {
+    const p = products.find(x => x.id === e.productId);
+    data.push([e.date, p?.name||'', e.qty, e.person||'', e.service||'', e.reason||'', e.remark||'']);
+  });
+  data.push([]); data.push(['Export le', getDate()]);
+  exportXlsx(data, `ONSSA_Meknes_Sorties_${getDate()}.xlsx`);
+}
+
+function exportXlsx(data, filename) {
+  try {
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    // Style header
+    const cols = data[0].length;
+    ws['!cols'] = data[0].map(() => ({wch: 20}));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Données');
+    XLSX.writeFile(wb, filename);
+    showToast('Export réussi : ' + filename, 'success');
+  } catch(e) {
+    showToast('Erreur export Excel.', 'error');
+    console.error(e);
+  }
+}
+
+// ========================
+// TOAST
+// ========================
+function showToast(msg, type = 'success') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3200);
+}
+
+// ========================
+// CLOCK
+// ========================
+function updateClock() {
+  const el = document.getElementById('clock');
+  if (!el) return;
+  const now = new Date();
+  el.textContent = now.toLocaleDateString(currentLang === 'ar' ? 'ar-MA' : currentLang === 'en' ? 'en-GB' : 'fr-FR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+
+// ========================
+// BOOTSTRAP
+// ========================
+document.addEventListener('DOMContentLoaded', () => {
+  initDefaults();
+  applyTheme(currentTheme);
+  setLang(currentLang);
+  createParticles();
+  initSlideshow();
+  initTilt();
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // Keyboard submit
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (document.getElementById('step1').classList.contains('active')) doLogin();
+    }
+  });
+
+  if (!checkSession()) {
+    document.getElementById('login-page').style.display = '';
+  }
+});
+</script>
+</body>
+</html>
